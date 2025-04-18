@@ -1,17 +1,22 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-import sqlite3
+from flask_sqlalchemy import SQLAlchemy
 from flask import flash, get_flashed_messages
 from datetime import datetime
 import bcrypt
+from models import db, User, BlockedIP, ChatID
+
 
 
 app = Flask(__name__)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///security_dashboard.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
 app.secret_key = "mysecretkey"
 
-#login page 
-from flask import Flask, render_template, request, redirect, flash, session, url_for
-import sqlite3
-import bcrypt
+
+
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -19,18 +24,12 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        # اتصال به دیتابیس و گرفتن اطلاعات کاربر
-        conn = sqlite3.connect("security_dashboard.db")
-        cursor = conn.cursor()
-        cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
-        conn.close()
+        # جستجوی کاربر با SQLAlchemy
+        user = User.query.filter_by(username=username).first()
 
         if user:
-            hashed_password = user[0]
-
-            # بررسی صحت رمز عبور با استفاده از bcrypt
-            if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+            # بررسی رمز عبور
+            if bcrypt.checkpw(password.encode('utf-8'), user.password):
                 session["logged_in"] = True
                 session["username"] = username
                 return redirect(url_for("home"))
@@ -58,22 +57,28 @@ def register():
         # هش کردن رمز عبور
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-        # ذخیره در دیتابیس
-        conn = sqlite3.connect('security_dashboard.db')
-        cursor = conn.cursor()
-
-        try:
-            cursor.execute('''
-                INSERT INTO users (fullname, personnel_number, username, password, extension, unit, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (fullname, personnel_number, username, hashed_password, extension, unit, created_at))
-            conn.commit()
-            flash('ثبت‌ نام با موفقیت انجام شد.', 'success')
-            return redirect('/')
-        except sqlite3.IntegrityError:
+        # بررسی تکراری نبودن نام کاربری
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
             flash('نام کاربری قبلاً ثبت شده است.', 'error')
-        finally:
-            conn.close()
+            return redirect(url_for('register'))
+
+        # ساختن شیء User و ذخیره در دیتابیس
+        new_user = User(
+            fullname=fullname,
+            personnel_number=personnel_number,
+            username=username,
+            password=hashed_password,
+            extension=extension,
+            unit=unit,
+            created_at=created_at
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('ثبت‌ نام با موفقیت انجام شد.', 'success')
+        return redirect(url_for('login'))
 
     return render_template('register.html')
 
@@ -121,9 +126,18 @@ def block_ip():
         duration = request.form.get('duration')
         notes = request.form.get('notes')
 
-        insert_blocked_ip(ip_address, reason, datetime_val, duration, notes)  # ذخیره در دیتابیس
-        flash("IP address add to database successfully!")
-        print("IP address blocked:", ip_address) #for debugging
+        blocked = BlockedIP(
+            ip_address=ip_address,
+            reason=reason,
+            datetime=datetime_val,
+            duration=duration,
+            notes=notes
+        )
+
+        db.session.add(blocked)
+        db.session.commit()
+
+        flash("✅ IP address saved successfully.")
         return redirect(url_for('block_ip'))
 
     return render_template("block_ip.html")
@@ -149,6 +163,35 @@ def sending_shift():
         return redirect('/')
     return render_template("sending_shift.html")
 
+@app.route('/show-chat-ids')
+def show_chat_ids():
+    with app.app_context():
+        chat_list = ChatID.query.all()
+        if not chat_list:
+            return "<h3>No chat_ids found or table doesn't exist.</h3>"
+        output = "<h3>Chat IDs:</h3><ul>"
+        for chat in chat_list:
+            output += f"<li>{chat.name} - {chat.chat_id}</li>"
+        output += "</ul>"
+        return output
+
+@app.route('/list-tables')
+def list_tables():
+    conn = sqlite3.connect('security_dashboard.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    conn.close()
+
+    return "<br>".join([table[0] for table in tables])
+
+@app.route('/add-chat-id')
+def add_chat_id():
+    new_chat = ChatID(name="مدیر", chat_id="123456789")
+    db.session.add(new_chat)
+    db.session.commit()
+    return "<h3>✅ Chat ID inserted successfully!</h3><a href='/show-chat-ids'>نمایش</a>"
+
 
 def insert_blocked_ip(ip_address, reason, datetime, duration, notes):
     conn = sqlite3.connect('security_dashboard.db')  # اتصال به دیتابیس
@@ -164,4 +207,12 @@ def insert_blocked_ip(ip_address, reason, datetime, duration, notes):
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        # Create the database tables if they don't exist
+        db.create_all()
+        print("Tables created!")
     app.run(debug=True)
+
+
+
+
