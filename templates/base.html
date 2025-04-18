@@ -1,0 +1,32 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}پنل مدیریت{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 داشبورد مدیریتی</h1>
+        </header>
+
+        <nav>
+            <a href="{{ url_for('home') }}">خانه</a> |
+            <a href="{{ url_for('block_ip') }}">block IP</a> |
+            <a href="{{ url_for('radar_report') }}">Radar Report</a> |
+            <a href="{{ url_for('send_to_bale') }}">ارسال به بله</a> |
+            <a href="{{ url_for('sending_shift') }}">شیفت‌ها</a>
+        </nav>
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer>
+            <p>تمام حقوق محفوظ است &copy; {{ 2025 }}</p>
+        </footer>
+    </div>
+</body>
+</html>

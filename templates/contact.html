@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>تماس با ما</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="form-container">
+        <h1>تماس با ما</h1>
+        <form action="/contact" method="POST">
+            <label>نام:</label>
+            <input type="text" name="name" required>
+
+            <label>ایمیل:</label>
+            <input type="email" name="email" required>
+
+            <label>پیام:</label>
+            <textarea name="message" rows="4" required></textarea>
+
+            <button type="submit">ارسال</button>
+        </form>
+    </div>
+</body>
+</html>

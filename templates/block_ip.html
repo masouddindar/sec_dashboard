@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>فرم بلاک IP</h1>
+<div class="form-container">
+    <form method="POST">
+        <label for="ip_address">آدرس IP:</label>
+        <input type="text" id="ip_address" name="ip_address" required>
+
+        <label for="reason">دلیل بلاک:</label>
+        <input type="text" id="reason" name="reason" >
+
+        <label for="datetime">تاریخ و زمان:</label>
+        <input type="datetime-local" id="datetime" name="datetime" >
+
+        <label for="duration">مدت زمان بلاک (دقیقه):</label>
+        <input type="number" id="duration" name="duration" >
+
+        <label for="notes">توضیحات:</label>
+        <textarea id="notes" name="notes" rows="3"></textarea>
+
+        <button type="submit">ثبت</button>
+    </form>
+</div>
+{% endblock %}

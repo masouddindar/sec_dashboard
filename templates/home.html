@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>داشبورد اصلی</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>داشبورد امنیت</h1>
+    <p>لطفاً یکی از بخش‌های زیر را انتخاب کنید</p>
+
+    <div class="cards-container">
+        <a href="{{ url_for('block_ip') }}" class="card block-ip">
+            🛡️ block IP
+        </a>
+        <a href="{{ url_for('send_to_bale') }}" class="card send-to-bale">
+            📩 ارسال به بله
+        </a>
+        <a href="{{ url_for('radar_report') }}" class="card radar-report">
+            📡 گزارش رادار
+        </a>
+        <a href="{{ url_for('sending_shift') }}" class="card sending-shift">
+            ⏰ ارسال شیفت
+        </a>
+    </div>
+
+</body>
+</html>

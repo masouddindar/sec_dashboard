@@ -1,0 +1,154 @@
+/* تنظیمات پایه برای html و body */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url("/static/kali.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: white;
+}
+
+/* قاب کلی برای محتوای صفحه */
+.container {
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 16px;
+    margin-top: 40px;
+}
+
+/* استایل تیترها */
+h1, h2, h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #ffffff;
+}
+
+/* پاراگراف */
+p {
+    text-align: center;
+    font-size: 18px;
+}
+
+/* فرم ورودی */
+.form-container {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 400px;
+    margin: auto;
+}
+
+/* استایل فیلدهای فرم */
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+}
+
+/* استایل دکمه */
+button {
+    background-color: #00aaff;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #0088cc;
+}
+
+/* کانتینر کارت‌های داشبورد */
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 30px;
+    padding: 40px;
+    max-width: 900px;
+    margin: auto;
+}
+
+/* ظاهر کارت‌ها */
+.card {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    text-decoration: none;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.card:hover {
+    transform: scale(1.1);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* رنگ‌بندی خاص برای هر بخش */
+.card.block-ip {
+    background-color: rgba(255, 0, 0, 0.4);
+    border: 3px solid #ff4d4d;
+}
+
+.card.send-to-bale {
+    background-color: rgba(0, 153, 255, 0.4);
+    border: 3px solid #3399ff;
+}
+
+.card.radar-report {
+    background-color: rgba(255, 204, 0, 0.4);
+    border: 3px solid #ffcc00;
+    color: black;
+}
+
+.card.sending-shift {
+    background-color: rgba(0, 204, 102, 0.4);
+    border: 3px solid #00cc66;
+}
+
+/* استایل ناوبری */
+nav {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+nav a {
+    color: #ffffff;
+    margin: 0 15px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+nav a:hover {
+    color: #00ccff;
+}
+
+/* فوتر */
+footer {
+    text-align: center;
+    padding: 10px;
+    margin-top: 40px;
+    font-size: 14px;
+    color: #ccc;
+}
