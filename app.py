@@ -2,26 +2,81 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import sqlite3
 from flask import flash, get_flashed_messages
 from datetime import datetime
+import bcrypt
+
 
 app = Flask(__name__)
 app.secret_key = "mysecretkey"
 
 #login page 
+from flask import Flask, render_template, request, redirect, flash, session, url_for
+import sqlite3
+import bcrypt
+
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
 
-        # اعتبارسنجی ساده
-        if username == "admin" and password == "123":
-            session["logged_in"] = True
-            return redirect(url_for("home")) 
+        # اتصال به دیتابیس و گرفتن اطلاعات کاربر
+        conn = sqlite3.connect("security_dashboard.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user:
+            hashed_password = user[0]
+
+            # بررسی صحت رمز عبور با استفاده از bcrypt
+            if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+                session["logged_in"] = True
+                session["username"] = username
+                return redirect(url_for("home"))
+            else:
+                flash("رمز عبور اشتباه است!", "error")
         else:
-            flash("نام کاربری یا رمز عبور اشتباه است!")
-            return redirect(url_for("login"))
+            flash("کاربری با این نام یافت نشد!", "error")
+
+        return redirect(url_for("login"))
 
     return render_template("index.html")
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        fullname = request.form['fullname']
+        personnel_number = request.form.get('personnel_number')
+        username = request.form['username']
+        password = request.form['password']
+        extension = request.form.get('extension')
+        unit = request.form.get('unit')
+        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # هش کردن رمز عبور
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        # ذخیره در دیتابیس
+        conn = sqlite3.connect('security_dashboard.db')
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute('''
+                INSERT INTO users (fullname, personnel_number, username, password, extension, unit, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (fullname, personnel_number, username, hashed_password, extension, unit, created_at))
+            conn.commit()
+            flash('ثبت‌ نام با موفقیت انجام شد.', 'success')
+            return redirect('/')
+        except sqlite3.IntegrityError:
+            flash('نام کاربری قبلاً ثبت شده است.', 'error')
+        finally:
+            conn.close()
+
+    return render_template('register.html')
+
 
 #pages for home 
 @app.route("/home")

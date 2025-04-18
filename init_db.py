@@ -23,3 +23,27 @@ conn.commit()
 conn.close()
 
 print("Database and table created successfully.")
+
+
+
+# اتصال به دیتابیس
+conn = sqlite3.connect('security_dashboard.db')
+cursor = conn.cursor()
+
+# ساخت جدول users
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fullname TEXT NOT NULL,
+    personnel_number TEXT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    extension TEXT,
+    unit TEXT,
+    created_at TEXT NOT NULL
+)
+''')
+
+# ذخیره تغییرات و بستن اتصال
+conn.commit()
+conn.close()
