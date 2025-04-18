@@ -1,5 +1,21 @@
 <!-- block_ip.html -->
 {% extends "base.html" %}
 {% block content %}
-<h2>ارسال به بله</h2>
+<!-- templates/send_to_bale.html -->
+<h2>ارسال پیام به بله</h2>
+<form method="POST">
+    <label for="chat_id">گیرنده:</label>
+    <select name="chat_id" id="chat_id" required>
+        {% for item in chat_ids %}
+            <option value="{{ item.chat_id }}">{{ item.name }} ({{ item.chat_id }})</option>
+        {% endfor %}
+    </select>
+
+    <label for="message">متن پیام:</label>
+    <textarea name="message" id="message" rows="4" required></textarea>
+
+    <button type="submit">ارسال پیام</button>
+</form>
 {% endblock %}
+
+
