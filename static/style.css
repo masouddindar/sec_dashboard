@@ -43,6 +43,18 @@ p {
     margin: auto;
 }
 
+.flash-message {
+    background-color: #e0ffe0;
+    border: 1px solid #00cc00;
+    color: #006600;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+}
+
+
 /* استایل فیلدهای فرم */
 input, textarea {
     width: 100%;

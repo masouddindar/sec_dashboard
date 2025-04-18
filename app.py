@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-
+import sqlite3
+from flask import flash, get_flashed_messages
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "mysecretkey"
@@ -57,20 +59,18 @@ def contact():
 def block_ip():
     if not session.get('logged_in'):
         return redirect('/')
-    elif request.method == 'POST':
+    if request.method == 'POST':
         ip_address = request.form.get('ip_address')
         reason = request.form.get('reason')
-        datetime = request.form.get('datetime')
+        datetime_val = request.form.get('datetime')  # اسم متغیر تغییر داده شده چون datetime یک reserved word هست
         duration = request.form.get('duration')
         notes = request.form.get('notes')
-        print("=====================================")
-        print("=== receving data from ip block form  ===")
-        print(f"IP Address: {ip_address}")
-        print(f"Reason: {reason}")
-        print(f"Datetime: {datetime}")
-        print(f"Duration: {duration}")
-        print(f"Notes: {notes}")
-        print("=====================================")
+
+        insert_blocked_ip(ip_address, reason, datetime_val, duration, notes)  # ذخیره در دیتابیس
+        flash("IP address add to database successfully!")
+        print("IP address blocked:", ip_address) #for debugging
+        return redirect(url_for('block_ip'))
+
     return render_template("block_ip.html")
 
 
@@ -94,6 +94,18 @@ def sending_shift():
         return redirect('/')
     return render_template("sending_shift.html")
 
+
+def insert_blocked_ip(ip_address, reason, datetime, duration, notes):
+    conn = sqlite3.connect('security_dashboard.db')  # اتصال به دیتابیس
+    cursor = conn.cursor()  # ساختن cursor برای اجرای کوئری‌ها
+
+    cursor.execute('''
+        INSERT INTO blocked_ips (ip_address, reason, datetime, duration, notes)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (ip_address, reason, datetime, duration, notes))  # اجرای کوئری و درج داده‌ها
+
+    conn.commit()  # ذخیره تغییرات
+    conn.close()   # بستن اتصال
 
 
 if __name__ == '__main__':

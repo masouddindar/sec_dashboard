@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="flash-message">
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 <h1>فرم بلاک IP</h1>
 <div class="form-container">
     <form method="POST">
@@ -22,4 +33,5 @@
         <button type="submit">ثبت</button>
     </form>
 </div>
+
 {% endblock %}
