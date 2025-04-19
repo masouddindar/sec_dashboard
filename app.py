@@ -1,19 +1,80 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask import flash, get_flashed_messages
 from datetime import datetime
 import bcrypt
 from models import db, User, BlockedIP, ChatID
+import os
+from models import SplunkAlert
+
+
 
 
 
 app = Flask(__name__)
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'security_dashboard.db') 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///security_dashboard.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///security_dashboard.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 app.secret_key = "mysecretkey"
+
+#make splunk hook 
+@app.route("/splunk-hook", methods=["POST"])
+def splunk_hook():
+    try:
+        data = request.get_json(force=True)
+
+        #make
+        src = data.get("src")
+        dest = data.get("dest")
+        counter = data.get("counter")
+        starttime = data.get("starttime")
+        endtime = data.get("endtime")
+        detecttime = data.get("detecttime")
+        reporttime = data.get("reporttime")
+        body = data.get("body")
+        incidentid = data.get("incidentid")
+
+        # generating IODEF
+        iodefdescription = f"حمله از {src} به {dest} با {counter} تلاش."
+        iodeftype = "dos" if int(counter) > 1000 else "scan"
+
+        # save in db
+        alert = SplunkAlert(
+            src=src,
+            dest=dest,
+            counter=counter,
+            starttime=starttime,
+            endtime=endtime,
+            detecttime=detecttime,
+            reporttime=reporttime,
+            body=body,
+            incidentid=incidentid,
+            iodefdescription=iodefdescription,
+            iodeftype=iodeftype
+        )
+
+        db.session.add(alert)
+        db.session.commit()
+
+        print("Alert saved:", alert.incidentid)
+
+        return jsonify({"message": "Saved"}), 200
+
+    except Exception as e:
+        print("❌ Error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+#show alerts
+@app.route("/alerts")
+def view_alerts():
+    alerts = SplunkAlert.query.order_by(SplunkAlert.received_at.desc()).all()
+    return render_template("alerts.html", alerts=alerts)
+
 
 
 
@@ -52,7 +113,7 @@ def register():
         password = request.form['password']
         extension = request.form.get('extension')
         unit = request.form.get('unit')
-        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        #created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # هش کردن رمز عبور
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -71,7 +132,7 @@ def register():
             password=hashed_password,
             extension=extension,
             unit=unit,
-            created_at=created_at
+            #created_at=created_at
         )
 
         db.session.add(new_user)
@@ -149,12 +210,41 @@ def radar_report():
         return redirect('/')
     return render_template("radar_report.html")
 
-
+#sending to bale
 @app.route("/send-to-bale", methods=["GET", "POST"])
 def send_to_bale():
     if not session.get('logged_in'):
         return redirect('/')
-    return render_template("send_to_bale.html")
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "send_message":
+            chat_id = request.form.get("chat_id")
+            message = request.form.get("message")
+            print(f"🔹 پیام برای {chat_id}: {message}")
+            flash("پیام با موفقیت ارسال شد.")
+
+        elif action == "add_chat_id":
+            name = request.form.get("name")
+            chat_id = request.form.get("new_chat_id")
+
+            # بررسی تکراری نبودن
+            existing = ChatID.query.filter_by(chat_id=chat_id).first()
+            if existing:
+                flash("این chat_id قبلاً ثبت شده است.", "error")
+            else:
+                new_entry = ChatID(name=name, chat_id=chat_id)
+                db.session.add(new_entry)
+                db.session.commit()
+                flash("chat_id جدید ثبت شد.", "success")
+
+        return redirect(url_for("send_to_bale"))
+
+    # حالت GET
+    chat_ids = ChatID.query.all()
+    return render_template("send_to_bale.html", chat_ids=chat_ids)
+
 
 
 @app.route("/sending-shift", methods=["GET", "POST"])
@@ -191,6 +281,17 @@ def add_chat_id():
     db.session.add(new_chat)
     db.session.commit()
     return "<h3>✅ Chat ID inserted successfully!</h3><a href='/show-chat-ids'>نمایش</a>"
+
+@app.route('/debug-users')
+def debug_users():
+    users = User.query.all()
+    if not users:
+        return "<h3>هیچ کاربری پیدا نشد.</h3>"
+    out = "<h3>کاربران موجود:</h3><ul>"
+    for u in users:
+        out += f"<li>{u.username}</li>"
+    out += "</ul>"
+    return out
 
 
 def insert_blocked_ip(ip_address, reason, datetime, duration, notes):

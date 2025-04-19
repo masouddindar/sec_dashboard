@@ -1,21 +1,36 @@
-<!-- block_ip.html -->
 {% extends "base.html" %}
 {% block content %}
-<!-- templates/send_to_bale.html -->
+
 <h2>ارسال پیام به بله</h2>
 <form method="POST">
+    <input type="hidden" name="action" value="send_message">
+
     <label for="chat_id">گیرنده:</label>
-    <select name="chat_id" id="chat_id" required>
+    <select name="chat_id" required>
         {% for item in chat_ids %}
             <option value="{{ item.chat_id }}">{{ item.name }} ({{ item.chat_id }})</option>
         {% endfor %}
     </select>
 
     <label for="message">متن پیام:</label>
-    <textarea name="message" id="message" rows="4" required></textarea>
+    <textarea name="message" rows="3" required></textarea>
 
     <button type="submit">ارسال پیام</button>
 </form>
+
+<hr>
+
+<h2>افزودن chat_id جدید</h2>
+<form method="POST">
+    <input type="hidden" name="action" value="add_chat_id">
+
+    <label for="name">نام گیرنده:</label>
+    <input type="text" name="name" required>
+
+    <label for="new_chat_id">chat_id:</label>
+    <input type="text" name="new_chat_id" required>
+
+    <button type="submit">ثبت chat_id جدید</button>
+</form>
+
 {% endblock %}
-
-

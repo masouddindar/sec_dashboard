@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Alert Lists From SPLUNK</h2>
+<table border="1" style="width:100%; background:white; color:black">
+    <tr>
+        <th>Incident ID</th><th>Src</th><th>Dest</th><th>Counter</th>
+        <th>Start</th><th>End</th><th>Detect</th><th>Report</th>
+        <th>Type</th><th>Description</th>
+    </tr>
+    {% for alert in alerts %}
+    <tr>
+        <td>{{ alert.incidentid }}</td>
+        <td>{{ alert.src }}</td>
+        <td>{{ alert.dest }}</td>
+        <td>{{ alert.counter }}</td>
+        <td>{{ alert.starttime }}</td>
+        <td>{{ alert.endtime }}</td>
+        <td>{{ alert.detecttime }}</td>
+        <td>{{ alert.reporttime }}</td>
+        <td>{{ alert.iodeftype }}</td>
+        <td>{{ alert.iodefdescription }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

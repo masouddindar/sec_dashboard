@@ -3,6 +3,27 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+class SplunkAlert(db.Model):
+    __tablename__ = 'splunk_alerts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    src = db.Column(db.String(100))
+    dest = db.Column(db.String(100))
+    counter = db.Column(db.Integer)
+    starttime = db.Column(db.String(50))
+    endtime = db.Column(db.String(50))
+    detecttime = db.Column(db.String(50))
+    reporttime = db.Column(db.String(50))
+    body = db.Column(db.Text)
+    incidentid = db.Column(db.String(100), unique=True)
+
+    # فیلدهای تولید شده پس از پردازش
+    iodefdescription = db.Column(db.Text)
+    iodeftype = db.Column(db.String(100))
+
+    received_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
