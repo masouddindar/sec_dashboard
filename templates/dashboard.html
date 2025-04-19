@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>📊 داشبورد امنیت</h2>
+<form method="POST">
+    <label>از تاریخ:</label>
+    <input type="date" name="start_date" value="{{ start_date }}">
+    <label>تا تاریخ:</label>
+    <input type="date" name="end_date" value="{{ end_date }}">
+    <button type="submit">فیلتر</button>
+</form>
+
+<ul>
+    <li><strong>مجموع کل هشدارها:</strong> {{ total_alerts }}</li>
+    <li><strong>هشدارهای امروز:</strong> {{ alerts_today }}</li>
+    <li><strong>هشدارهای ۷ روز اخیر:</strong> {{ recent_alerts }}</li>
+</ul>
+
+<h3>📌 نمودار نوع هشدارها</h3>
+<canvas id="typeChart" width="400" height="200"></canvas>
+
+<h3>🌐 بیشترین IP های مشکوک</h3>
+<table border="1" style="background:white; color:black;">
+    <tr><th>IP</th><th>تعداد هشدار</th></tr>
+    {% for ip, count in top_src_ips %}
+        <tr><td>{{ ip }}</td><td>{{ count }}</td></tr>
+    {% endfor %}
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('typeChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: {{ alerts_by_type | map(attribute=0) | list | safe }},
+            datasets: [{
+                label: 'نوع هشدار',
+                data: {{ alerts_by_type | map(attribute=1) | list | safe }},
+                backgroundColor: ['#ff6384','#36a2eb','#ffce56','#8bc34a','#9c27b0']
+            }]
+        }
+    });
+</script>
+
+{% endblock %}

@@ -24,6 +24,15 @@ class SplunkAlert(db.Model):
     received_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class IODEFDocument(db.Model):
+    __tablename__ = 'iodef_documents'
+
+    id = db.Column(db.Integer, primary_key=True)
+    incidentid = db.Column(db.String(100), unique=True)
+    raw_xml = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class User(db.Model):
     __tablename__ = 'users'
 

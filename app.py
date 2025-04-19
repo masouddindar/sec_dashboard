@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask import flash, get_flashed_messages
-from datetime import datetime
+from datetime import datetime, timedelta
 import bcrypt
 from models import db, User, BlockedIP, ChatID
 import os
 from models import SplunkAlert
-
+import requests
+from sqlalchemy import func
 
 
 
@@ -22,12 +23,14 @@ db.init_app(app)
 app.secret_key = "mysecretkey"
 
 #make splunk hook 
+import requests
+
 @app.route("/splunk-hook", methods=["POST"])
 def splunk_hook():
     try:
         data = request.get_json(force=True)
 
-        #make
+        # داده‌های لازم
         src = data.get("src")
         dest = data.get("dest")
         counter = data.get("counter")
@@ -38,35 +41,101 @@ def splunk_hook():
         body = data.get("body")
         incidentid = data.get("incidentid")
 
-        # generating IODEF
+        # داده‌های ساختگی (بعداً واقعی می‌شن)
         iodefdescription = f"حمله از {src} به {dest} با {counter} تلاش."
         iodeftype = "dos" if int(counter) > 1000 else "scan"
+        srccountry = "Unknown"
+        meaning = "Suspicious Traffic"
+        src_port = "443"
+        proto = "TCP"
+        target_system = "<System category='target'><Node><Address category='ipv4-addr'>" + dest + "</Address></Node></System>"
+
+        # reading main file(body)
+        template_path = r"C:\Users\m.dindar\Desktop\myflaskapp\sec_dashboard\main_body.txt"
+        with open(template_path, "r", encoding="utf-8") as file:
+            xml_template = file.read()
+
+        # replacing
+        xml_filled = xml_template \
+            .replace("+ incidentid +", incidentid) \
+            .replace("+ detecttime +", detecttime) \
+            .replace("+ starttime +", starttime) \
+            .replace("+ endtime +", endtime) \
+            .replace("+ reporttime +", reporttime) \
+            .replace("+ iodefdescription +", iodefdescription) \
+            .replace("+ iodeftype +", iodeftype) \
+            .replace("+ src +", src) \
+            .replace("+ counter +", str(counter)) \
+            .replace("+ srccountry +", srccountry) \
+            .replace("+ meaning +", meaning) \
+            .replace("+ src_port +", src_port) \
+            .replace("+ proto +", proto) \
+            .replace("+ target_system +", target_system)
 
         # save in db
-        alert = SplunkAlert(
-            src=src,
-            dest=dest,
-            counter=counter,
-            starttime=starttime,
-            endtime=endtime,
-            detecttime=detecttime,
-            reporttime=reporttime,
-            body=body,
-            incidentid=incidentid,
-            iodefdescription=iodefdescription,
-            iodeftype=iodeftype
-        )
-
-        db.session.add(alert)
+        from models import IODEFDocument
+        xml_doc = IODEFDocument(incidentid=incidentid, raw_xml=xml_filled)
+        db.session.add(xml_doc)
         db.session.commit()
 
-        print("Alert saved:", alert.incidentid)
+        # sending to server
+        response = requests.post("http://127.0.0.1:5000/splunk-hook", data=xml_filled, headers={'Content-Type': 'application/xml'})
+        print("sending state", response.status_code)
 
-        return jsonify({"message": "Saved"}), 200
+        return jsonify({"message": " make and send xml"}), 200
 
     except Exception as e:
         print("❌ Error:", e)
         return jsonify({"error": str(e)}), 500
+
+#dashboard
+@app.route("/dashboard", methods=["GET", "POST"])
+def dashboard():
+    from models import SplunkAlert
+    from sqlalchemy import func
+    from datetime import datetime
+
+    # مقادیر پیش‌فرض (هفت روز اخیر)
+    end_date = datetime.utcnow().date()
+    start_date = end_date - timedelta(days=7)
+
+    if request.method == 'POST':
+        start_str = request.form.get("start_date")
+        end_str = request.form.get("end_date")
+        if start_str and end_str:
+            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_str, '%Y-%m-%d').date()
+
+    # فیلتر بازه زمانی
+    alerts_in_range = SplunkAlert.query.filter(
+        func.date(SplunkAlert.detecttime) >= start_date,
+        func.date(SplunkAlert.detecttime) <= end_date
+    )
+
+    alerts_by_type = alerts_in_range.with_entities(
+        SplunkAlert.iodeftype, func.count(SplunkAlert.id)
+    ).group_by(SplunkAlert.iodeftype).all()
+
+    top_src_ips = alerts_in_range.with_entities(
+        SplunkAlert.src, func.count(SplunkAlert.id)
+    ).group_by(SplunkAlert.src).order_by(func.count(SplunkAlert.id).desc()).limit(5).all()
+
+    return render_template(
+        "dashboard.html",
+        alerts_by_type=alerts_by_type,
+        top_src_ips=top_src_ips,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+
+
+
+@app.route("/iodef-documents")
+def view_iodef_documents():
+    from models import IODEFDocument
+    documents = IODEFDocument.query.order_by(IODEFDocument.created_at.desc()).all()
+    return render_template("iodef_list.html", documents=documents)
 
 
 #show alerts
@@ -149,7 +218,22 @@ def register():
 def home():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
-    return render_template("home.html")
+
+    from models import SplunkAlert
+    from sqlalchemy import func
+    from datetime import datetime
+
+    today = datetime.utcnow().date()
+    total_alerts = SplunkAlert.query.count()
+    alerts_today = SplunkAlert.query.filter(
+        func.date(SplunkAlert.detecttime) == today
+    ).count()
+
+    return render_template(
+        "home.html",
+        total_alerts=total_alerts,
+        alerts_today=alerts_today
+    )
 
 
 @app.route('/about')

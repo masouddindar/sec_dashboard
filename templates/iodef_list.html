@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>فایل‌های ذخیره‌شده IODEF</h2>
+
+{% if documents %}
+    <ul>
+    {% for doc in documents %}
+        <li>
+            <strong>Incident ID:</strong> {{ doc.incidentid }} |
+            <strong>زمان ذخیره:</strong> {{ doc.created_at.strftime('%Y-%m-%d %H:%M:%S') }} |
+            <a href="{{ url_for('show_iodef_document', doc_id=doc.id) }}">مشاهده</a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>هیچ فایلی ذخیره نشده.</p>
+{% endif %}
+{% endblock %}

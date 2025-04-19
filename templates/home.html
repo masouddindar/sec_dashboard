@@ -5,6 +5,7 @@
     <title>داشبورد اصلی</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
     <h1>داشبورد امنیت</h1>
@@ -24,6 +25,12 @@
             ⏰ ارسال شیفت
         </a>
     </div>
+	<div class="form-container" style="margin-top:30px;">
+    <h3>📊 خلاصه وضعیت هشدارها</h3>
+    <p>تعداد کل هشدارها: <strong>{{ total_alerts }}</strong></p>
+    <p>تعداد هشدارهای امروز: <strong>{{ alerts_today }}</strong></p>
+    <a href="{{ url_for('dashboard') }}">نمایش داشبورد کامل</a>
+</div>
 
 </body>
 </html>
