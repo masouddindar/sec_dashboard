@@ -79,7 +79,7 @@ def splunk_hook():
         db.session.commit()
 
         # sending to server
-        response = requests.post("http://127.0.0.1:5000/splunk-hook", data=xml_filled, headers={'Content-Type': 'application/xml'})
+        response = requests.post("1.1.1.1", data=xml_filled, headers={'Content-Type': 'application/xml'})
         print("sending state", response.status_code)
 
         return jsonify({"message": " make and send xml"}), 200
@@ -349,15 +349,8 @@ def show_chat_ids():
         output += "</ul>"
         return output
 
-@app.route('/list-tables')
-def list_tables():
-    conn = sqlite3.connect('security_dashboard.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = cursor.fetchall()
-    conn.close()
 
-    return "<br>".join([table[0] for table in tables])
+
 
 @app.route('/add-chat-id')
 def add_chat_id():
@@ -378,17 +371,6 @@ def debug_users():
     return out
 
 
-def insert_blocked_ip(ip_address, reason, datetime, duration, notes):
-    conn = sqlite3.connect('security_dashboard.db')  # اتصال به دیتابیس
-    cursor = conn.cursor()  # ساختن cursor برای اجرای کوئری‌ها
-
-    cursor.execute('''
-        INSERT INTO blocked_ips (ip_address, reason, datetime, duration, notes)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (ip_address, reason, datetime, duration, notes))  # اجرای کوئری و درج داده‌ها
-
-    conn.commit()  # ذخیره تغییرات
-    conn.close()   # بستن اتصال
 
 
 if __name__ == '__main__':
