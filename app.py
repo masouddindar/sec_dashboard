@@ -8,8 +8,8 @@ import os
 from models import SplunkAlert
 import requests
 from sqlalchemy import func
-
-
+from flask import make_response
+import requests
 
 
 app = Flask(__name__)
@@ -23,8 +23,6 @@ db.init_app(app)
 app.secret_key = "mysecretkey"
 
 #make splunk hook 
-import requests
-
 @app.route("/splunk-hook", methods=["POST"])
 def splunk_hook():
     try:
@@ -88,7 +86,57 @@ def splunk_hook():
         print("❌ Error:", e)
         return jsonify({"error": str(e)}), 500
 
-#dashboard
+
+
+@app.route("/iodef-documents/download/<int:doc_id>")
+def download_iodef_document(doc_id):
+    from models import IODEFDocument
+    doc = IODEFDocument.query.get_or_404(doc_id)
+
+    response = make_response(doc.raw_xml)
+    response.headers["Content-Type"] = "application/xml"
+    response.headers["Content-Disposition"] = f"attachment; filename={doc.incidentid}.xml"
+    return response
+
+@app.route("/incident/resend/<int:doc_id>", methods=["POST"])
+def resend_iodef_document(doc_id):
+    from models import IODEFDocument
+    incident = IODEFDocument.query.get_or_404(doc_id)
+
+    try:
+        response = requests.post("httpbin.org/post", data=incident.raw_xml,
+                                 headers={'Content-Type': 'application/xml'})
+        flash(f"📤 ارسال مجدد با موفقیت انجام شد. (Status: {response.status_code})", "success")
+    except Exception as e:
+        flash(f"خطا در ارسال مجدد: {str(e)}", "error")
+
+    return redirect(url_for("incident_detail", doc_id=doc_id))
+
+
+#detail  of page
+@app.route("/incident/<int:doc_id>")
+def incident_detail(doc_id):
+    from models import IODEFDocument
+    incident = IODEFDocument.query.get_or_404(doc_id)
+    return render_template("incident_detail.html", incident=incident)
+
+
+
+#latest incidents
+@app.route("/latest-incidents")
+def latest_incidents():
+    from models import IODEFDocument
+    incidents = IODEFDocument.query.order_by(IODEFDocument.created_at.desc()).limit(20).all()
+    return render_template("latest_incidents.html", incidents=incidents)
+
+@app.route("/iodef-documents/<int:doc_id>")
+def show_iodef_document(doc_id):
+    from models import IODEFDocument
+    doc = IODEFDocument.query.get_or_404(doc_id)
+    return f"<h3>Incident ID: {doc.incidentid}</h3><pre style='background:#eee; padding:15px; direction:ltr'>{doc.raw_xml}</pre>"
+
+
+#dashboard for radar
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     from models import SplunkAlert
@@ -337,6 +385,8 @@ def sending_shift():
         return redirect('/')
     return render_template("sending_shift.html")
 
+
+#show saved chat ids
 @app.route('/show-chat-ids')
 def show_chat_ids():
     with app.app_context():
@@ -359,6 +409,7 @@ def add_chat_id():
     db.session.commit()
     return "<h3>✅ Chat ID inserted successfully!</h3><a href='/show-chat-ids'>نمایش</a>"
 
+#show users
 @app.route('/debug-users')
 def debug_users():
     users = User.query.all()

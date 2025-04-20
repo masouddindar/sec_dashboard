@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="mb-4">latest incidents id</h2>
+
+    <table class="table table-bordered table-hover table-striped bg-white text-center">
+	
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Incident ID</th>
+                <th>زمان ثبت</th>
+                <th>نمایش XML</th>
+                <th>📥 دانلود</th>
+				<th>مشاهده</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inc in incidents %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td class="fw-bold">{{ inc.incidentid }}</td>
+                <td>{{ inc.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td><a href="{{ url_for('show_iodef_document', doc_id=inc.id) }}" class="btn btn-sm btn-info"> نمایش</a></td>
+                <td><a href="{{ url_for('download_iodef_document', doc_id=inc.id) }}" class="btn btn-sm btn-success">⬇️ دانلود</a></td>
+				<td><a href="{{ url_for('incident_detail', doc_id=inc.id) }}" class="btn btn-sm btn-info"> مشاهده</a></td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
