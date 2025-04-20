@@ -10,7 +10,7 @@ import requests
 from sqlalchemy import func
 from flask import make_response
 import requests
-
+from models import IODEFDocument
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -87,10 +87,16 @@ def splunk_hook():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/iodef/view/<int:incident_id>')
+def view_iodef_document(incident_id):
+    incident = IODEFDocument.query.get_or_404(incident_id)
+    return render_template('show_incident.html', incident=incident)
+
+
 
 @app.route("/iodef-documents/download/<int:doc_id>")
 def download_iodef_document(doc_id):
-    from models import IODEFDocument
+    
     doc = IODEFDocument.query.get_or_404(doc_id)
 
     response = make_response(doc.raw_xml)
@@ -100,7 +106,7 @@ def download_iodef_document(doc_id):
 
 @app.route("/incident/resend/<int:doc_id>", methods=["POST"])
 def resend_iodef_document(doc_id):
-    from models import IODEFDocument
+    
     incident = IODEFDocument.query.get_or_404(doc_id)
 
     try:
@@ -116,7 +122,6 @@ def resend_iodef_document(doc_id):
 #detail  of page
 @app.route("/incident/<int:doc_id>")
 def incident_detail(doc_id):
-    from models import IODEFDocument
     incident = IODEFDocument.query.get_or_404(doc_id)
     return render_template("incident_detail.html", incident=incident)
 
@@ -139,10 +144,6 @@ def show_iodef_document(doc_id):
 #dashboard for radar
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
-    from models import SplunkAlert
-    from sqlalchemy import func
-    from datetime import datetime
-
     # مقادیر پیش‌فرض (هفت روز اخیر)
     end_date = datetime.utcnow().date()
     start_date = end_date - timedelta(days=7)
@@ -266,21 +267,21 @@ def register():
 def home():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
-
-    from models import SplunkAlert
-    from sqlalchemy import func
-    from datetime import datetime
-
+    
     today = datetime.utcnow().date()
     total_alerts = SplunkAlert.query.count()
     alerts_today = SplunkAlert.query.filter(
         func.date(SplunkAlert.detecttime) == today
     ).count()
 
+    # 🆕 گرفتن آخرین ۵ incident
+    latest_incidents = IODEFDocument.query.order_by(IODEFDocument.created_at.desc()).limit(5).all()
+
     return render_template(
         "home.html",
         total_alerts=total_alerts,
-        alerts_today=alerts_today
+        alerts_today=alerts_today,
+        latest_incidents=latest_incidents  # 👈 پاس دادن به قالب
     )
 
 

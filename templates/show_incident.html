@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>جزئیات Incident</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6">
+
+    <div class="max-w-4xl mx-auto bg-gray-800 rounded-2xl shadow-lg p-6">
+        <!-- عنوان -->
+        <h1 class="text-2xl font-bold text-center mb-6 border-b border-gray-600 pb-2">جزئیات Incident</h1>
+
+        <!-- اطلاعات Incident -->
+        <div class="grid grid-cols-2 gap-4 text-sm md:text-base">
+            <div><strong>Incident ID:</strong> {{ incident.incident_id }}</div>
+            <div><strong>تاریخ ثبت:</strong> {{ incident.report_time }}</div>
+            <div><strong>IP:</strong> {{ incident.source_ip }}</div>
+            <div><strong>پورت:</strong> {{ incident.source_port }}</div>
+            <div><strong>Impact:</strong> {{ incident.impact }}</div>
+            <div><strong>Type:</strong> {{ incident.type }}</div>
+        </div>
+
+        <!-- نمایش XML -->
+        <div class="mt-6">
+            <h2 class="text-lg font-semibold mb-2">محتوای XML</h2>
+            <pre class="bg-gray-700 text-green-200 p-4 rounded-lg overflow-auto text-xs md:text-sm whitespace-pre-wrap max-h-96">
+{{ incident.xml_raw | safe }}
+            </pre>
+        </div>
+
+        <!-- دکمه‌ها -->
+        <div class="mt-6 flex flex-wrap justify-center gap-4">
+            <a href="{{ url_for('download_xml', incident_id=incident.id) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow">⬇️ دانلود XML</a>
+            <a href="{{ url_for('resend_xml', incident_id=incident.id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl shadow">🔁 ارسال مجدد</a>
+            <a href="{{ url_for('view_iodef_documents') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl shadow">🔙 بازگشت</a>
+        </div>
+    </div>
+
+</body>
+</html>
