@@ -1,41 +1,42 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>داشبورد اصلی</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Security Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 </head>
-
 <body>
+    <header>
+        <h1>Security Dashboard</h1>
+        <p>مرکز نظارت بر رویدادهای امنیتی</p>
+    </header>
 
-    <h1>داشبورد امنیت</h1>
-    <p>لطفاً یکی از بخش‌های زیر را انتخاب کنید</p>
-	
+    <main>
+        <div class="grid-container">
+			<a href="{{ url_for('latest_incidents') }}" class="card">
+                <h2>📊 گزارش‌های امنیتی</h2>
+                <p>Display data received from Splunk</p>
+            </a>
+            <a href="{{ url_for('view_iodef_documents') }}" class="card">
+				<h2>📄IODEF گزارش‌های </h2>
+				<p>View and review reports of XML</p>
+			</a>
 
-    <div class="cards-container">
+            <a href="{{ url_for('block_ip') }}" class="card">
+                <h2>بلاک آی پی آدرس</h2>
+                <p>Register and manage blocked addresses</p>
+            </a>
+            <a href="{{ url_for('send_to_bale') }}" class="card">
+                <h2>📤 ارسال به بله</h2>
+                <p>ارسال پیام به ربات بله</p>
+            </a>
+            
+        </div>
+    </main>
 
-		<a href="{{ url_for('latest_incidents') }}" class="card block-ip">Latest Incidents </a>
-
-
-        <a href="{{ url_for('block_ip') }}" class="card block-ip">
-            🛡️ block IP
-        </a>
-        <a href="{{ url_for('send_to_bale') }}" class="card send-to-bale">
-            📩 ارسال به بله
-        </a>
-        <a href="{{ url_for('radar_report') }}" class="card radar-report">
-            📡 گزارش رادار
-        </a>
-        <a href="{{ url_for('sending_shift') }}" class="card sending-shift">
-            ⏰ ارسال شیفت
-        </a>
-    </div>
-	<div class="form-container" style="margin-top:30px;">
-    <h3>📊 خلاصه وضعیت هشدارها</h3>
-    <p>تعداد کل هشدارها: <strong>{{ total_alerts }}</strong></p>
-    <p>تعداد هشدارهای امروز: <strong>{{ alerts_today }}</strong></p>
-    <a href="{{ url_for('dashboard') }}">نمایش داشبورد کامل</a>
-</div>
-
+    <footer>
+        <p>&copy; 2025 - SOC Dashboard by Masoud Dindar</p>
+    </footer>
 </body>
 </html>

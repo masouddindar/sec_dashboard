@@ -22,7 +22,7 @@
                 <td>{{ loop.index }}</td>
                 <td class="fw-bold">{{ inc.incidentid }}</td>
                 <td>{{ inc.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                <td><a href="{{ url_for('show_iodef_document', doc_id=inc.id) }}" class="btn btn-sm btn-info"> نمایش</a></td>
+                <td><a href="{{ url_for('show_iodef_documents', doc_id=inc.id) }}" class="btn btn-sm btn-info"> نمایش</a></td>
                 <td><a href="{{ url_for('download_iodef_document', doc_id=inc.id) }}" class="btn btn-sm btn-success">⬇️ دانلود</a></td>
 				<td><a href="{{ url_for('incident_detail', doc_id=inc.id) }}" class="btn btn-sm btn-info"> مشاهده</a></td>
 

@@ -130,13 +130,12 @@ def incident_detail(doc_id):
 #latest incidents
 @app.route("/latest-incidents")
 def latest_incidents():
-    from models import IODEFDocument
     incidents = IODEFDocument.query.order_by(IODEFDocument.created_at.desc()).limit(20).all()
     return render_template("latest_incidents.html", incidents=incidents)
 
 @app.route("/iodef-documents/<int:doc_id>")
-def show_iodef_document(doc_id):
-    from models import IODEFDocument
+def show_iodef_documents(doc_id):
+    
     doc = IODEFDocument.query.get_or_404(doc_id)
     return f"<h3>Incident ID: {doc.incidentid}</h3><pre style='background:#eee; padding:15px; direction:ltr'>{doc.raw_xml}</pre>"
 
@@ -178,13 +177,6 @@ def dashboard():
     )
 
 
-
-
-@app.route("/iodef-documents")
-def view_iodef_documents():
-    from models import IODEFDocument
-    documents = IODEFDocument.query.order_by(IODEFDocument.created_at.desc()).all()
-    return render_template("iodef_list.html", documents=documents)
 
 
 #show alerts
@@ -260,6 +252,12 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
+# نمایش لیست گزارش‌های IODEF
+@app.route("/iodef-documents")
+def view_iodef_documents():
+    documents = IODEFDocument.query.order_by(IODEFDocument.created_at.desc()).all()
+    return render_template("view_iodef_documents.html", documents=documents)
 
 
 #pages for home 
@@ -399,7 +397,6 @@ def show_chat_ids():
             output += f"<li>{chat.name} - {chat.chat_id}</li>"
         output += "</ul>"
         return output
-
 
 
 
