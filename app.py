@@ -92,6 +92,15 @@ def view_iodef_document(incident_id):
     incident = IODEFDocument.query.get_or_404(incident_id)
     return render_template('show_incident.html', incident=incident)
 
+@app.route("/iodef-documents/edit/<int:doc_id>", methods=["GET", "POST"])
+def edit_iodef_document(doc_id):
+    doc = IODEFDocument.query.get_or_404(doc_id)
+    if request.method == "POST":
+        doc.raw_xml = request.form["xml"]
+        db.session.commit()
+        flash("XML updated!", "success")
+        return redirect(url_for("view_iodef_document", incident_id=doc.id))
+    return render_template("edit_iodef.html", doc=doc)
 
 
 @app.route("/iodef-documents/download/<int:doc_id>")

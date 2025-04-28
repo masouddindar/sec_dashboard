@@ -1,42 +1,244 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <title>Security Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0e1116;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: start;
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: #f2f2f2;
+            text-align: center;
+        }
+
+        .card {
+            background-color: #1c1f26;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .label {
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 10px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 15px;
+        }
+
+        li {
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+            padding: 5px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            text-align: center;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #2a2d34;
+            color: #ccc;
+        }
+
+        tr {
+            border-bottom: 1px solid #333;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .action-button {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #161a20;
+            padding: 30px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .action-button:hover {
+            background-color: #1f232b;
+        }
+
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .scroll-box {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            color: #888;
+        }
+
+        .footer-links a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: #ccc;
+        }
+
+        button {
+            background: none;
+            border: none;
+            color: #f48fb1;
+            cursor: pointer;
+        }
+
+        a {
+            color: #4fc3f7;
+            text-decoration: none;
+            margin: 0 3px;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Security Dashboard</h1>
-        <p>مرکز نظارت بر رویدادهای امنیتی</p>
-    </header>
+<div class="container">
+    
+    <!-- 📄 بخش لیست گزارش‌ها -->
+    <div class="card scroll-box">
+        <h2>📄 آخرین گزارش‌های ثبت‌شده</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Incident ID</th>
+                <th>تاریخ ثبت</th>
+                <th>عملیات</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for doc in latest_incidents %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ doc.incidentid }}</td>
+                    <td>{{ doc.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('incident_detail', doc_id=doc.id) }}">نمایش</a> |
+                        <a href="{{ url_for('edit_iodef_document', doc_id=doc.id) }}">ویرایش</a> |
+                        <form method="POST" action="{{ url_for('resend_iodef_document', doc_id=doc.id) }}"
+                              style="display:inline;">
+                            <button type="submit">ارسال مجدد</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    <main>
-        <div class="grid-container">
-			<a href="{{ url_for('latest_incidents') }}" class="card">
-                <h2>📊 گزارش‌های امنیتی</h2>
-                <p>Display data received from Splunk</p>
-            </a>
-            <a href="{{ url_for('view_iodef_documents') }}" class="card">
-				<h2>📄IODEF گزارش‌های </h2>
-				<p>View and review reports of XML</p>
-			</a>
-
-            <a href="{{ url_for('block_ip') }}" class="card">
-                <h2>بلاک آی پی آدرس</h2>
-                <p>Register and manage blocked addresses</p>
-            </a>
-            <a href="{{ url_for('send_to_bale') }}" class="card">
-                <h2>📤 ارسال به بله</h2>
-                <p>ارسال پیام به ربات بله</p>
-            </a>
-            
+    <!-- 📊 بخش آمار کلی -->
+    <h1>Your Security Starts Here.</h1>
+    <div class="stats-grid">
+        <div class="card">
+            <div class="label">Total Alerts</div>
+            <div class="value">{{ total_alerts }}</div>
         </div>
-    </main>
+        <div class="card">
+            <div class="label">Alerts Today</div>
+            <div class="value">{{ alerts_today }}</div>
+        </div>
+        <div class="card">
+            <div class="label">Top Alert Types</div>
+            <ul>
+                {% for alert in alerts_by_type %}
+                    <li>{{ alert[0] }} <span>{{ alert[1] }}</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card">
+            <div class="label">Top Source IPs</div>
+            <ul>
+                {% for ip in top_src_ips %}
+                    <li>{{ ip[0] }} <span>{{ ip[1] }}</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 
-    <footer>
-        <p>&copy; 2025 - SOC Dashboard by Masoud Dindar</p>
-    </footer>
+    <!-- 🧭 دکمه‌های عملیاتی -->
+    <div class="action-grid">
+        <a href="{{ url_for('dashboard') }}" class="action-button">
+            <div class="icon">📊</div>
+            View Dashboards
+        </a>
+        <a href="{{ url_for('view_alerts') }}" class="action-button">
+            <div class="icon">📋</div>
+            Search Incidents
+        </a>
+        <a href="{{ url_for('send_to_bale') }}" class="action-button">
+            <div class="icon">⬆️</div>
+            Add Data
+        </a>
+    </div>
+
+    <!-- ⚙️ لینک‌های پایین صفحه -->
+    <div class="footer-links">
+        <a href="#">Documentation</a>
+        <a href="#">Contact Support</a>
+    </div>
+</div>
 </body>
 </html>
