@@ -11,6 +11,9 @@ from sqlalchemy import func
 from flask import make_response
 import requests
 from models import IODEFDocument
+import xml.etree.ElementTree as ET
+
+
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -71,7 +74,7 @@ def splunk_hook():
             .replace("+ target_system +", target_system)
 
         # save in db
-        from models import IODEFDocument
+        
         xml_doc = IODEFDocument(incidentid=incidentid, raw_xml=xml_filled)
         db.session.add(xml_doc)
         db.session.commit()
@@ -91,8 +94,29 @@ def splunk_hook():
 def view_iodef_document(incident_id):
     incident = IODEFDocument.query.get_or_404(incident_id)
     return render_template('show_incident.html', incident=incident)
+    
 
+@app.route("/iodef-documents/edit/<int:doc_id>", methods=["GET", "POST"])
+def edit_iodef_document(doc_id):
+    doc = IODEFDocument.query.get_or_404(doc_id)
 
+    if request.method == "POST":
+        edited_xml = request.form["xml"]
+
+        #اضافه کردن اعتبارسنجی ساختار XML
+        try:
+            ET.fromstring(edited_xml)  # تلاش برای پارس کردن XML
+        except ET.ParseError as e:
+            flash(f"❌ ساختار XML اشتباه است: {str(e)}", "error")
+            return redirect(url_for("edit_iodef_document", doc_id=doc.id))
+
+        # اگر XML معتبر بود:
+        doc.raw_xml = edited_xml
+        db.session.commit()
+        flash("✅ XML با موفقیت ذخیره شد.", "success")
+        return redirect(url_for("view_iodef_document", incident_id=doc.id))
+
+    return render_template("edit_iodef.html", doc=doc)
 
 @app.route("/iodef-documents/download/<int:doc_id>")
 def download_iodef_document(doc_id):
