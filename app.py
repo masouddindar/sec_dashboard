@@ -12,10 +12,17 @@ from flask import make_response
 import requests
 from models import IODEFDocument
 import xml.etree.ElementTree as ET
+from routes.iodef import iodef_bp
+from routes.auth import auth_bp
+
 
 
 
 app = Flask(__name__)
+app.register_blueprint(iodef_bp)
+app.register_blueprint(auth_bp)
+
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'security_dashboard.db') 
 
@@ -213,69 +220,71 @@ def view_alerts():
 
 
 
-@app.route("/", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+# @app.route("/", methods=["GET", "POST"])
+# def login():
+#     if request.method == "POST":
+#         username = request.form["username"]
+#         password = request.form["password"]
 
-        # جستجوی کاربر با SQLAlchemy
-        user = User.query.filter_by(username=username).first()
+#         # جستجوی کاربر با SQLAlchemy
+#         user = User.query.filter_by(username=username).first()
 
-        if user:
-            # بررسی رمز عبور
-            if bcrypt.checkpw(password.encode('utf-8'), user.password):
-                session["logged_in"] = True
-                session["username"] = username
-                return redirect(url_for("home"))
-            else:
-                flash("رمز عبور اشتباه است!", "error")
-        else:
-            flash("کاربری با این نام یافت نشد!", "error")
+#         if user:
+#             # بررسی رمز عبور
+#             if bcrypt.checkpw(password.encode('utf-8'), user.password):
+#                 session["logged_in"] = True
+#                 session["username"] = username
+#                 return redirect(url_for("home"))
+#             else:
+#                 flash("رمز عبور اشتباه است!", "error")
+#         else:
+#             flash("کاربری با این نام یافت نشد!", "error")
 
-        return redirect(url_for("login"))
+#         return redirect(url_for("login"))
 
-    return render_template("index.html")
+#     return render_template("index.html")
 
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        fullname = request.form['fullname']
-        personnel_number = request.form.get('personnel_number')
-        username = request.form['username']
-        password = request.form['password']
-        extension = request.form.get('extension')
-        unit = request.form.get('unit')
-        #created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     if request.method == 'POST':
+#         fullname = request.form['fullname']
+#         personnel_number = request.form.get('personnel_number')
+#         username = request.form['username']
+#         password = request.form['password']
+#         extension = request.form.get('extension')
+#         unit = request.form.get('unit')
+#         #created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        # هش کردن رمز عبور
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+#         # هش کردن رمز عبور
+#         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-        # بررسی تکراری نبودن نام کاربری
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            flash('نام کاربری قبلاً ثبت شده است.', 'error')
-            return redirect(url_for('register'))
+#         # بررسی تکراری نبودن نام کاربری
+#         existing_user = User.query.filter_by(username=username).first()
+#         if existing_user:
+#             flash('نام کاربری قبلاً ثبت شده است.', 'error')
+#             return redirect(url_for('register'))
 
-        # ساختن شیء User و ذخیره در دیتابیس
-        new_user = User(
-            fullname=fullname,
-            personnel_number=personnel_number,
-            username=username,
-            password=hashed_password,
-            extension=extension,
-            unit=unit,
-            #created_at=created_at
-        )
+#         # ساختن شیء User و ذخیره در دیتابیس
+#         new_user = User(
+#             fullname=fullname,
+#             personnel_number=personnel_number,
+#             username=username,
+#             password=hashed_password,
+#             extension=extension,
+#             unit=unit,
+#             #created_at=created_at
+#         )
 
-        db.session.add(new_user)
-        db.session.commit()
+#         db.session.add(new_user)
+#         db.session.commit()
 
-        flash('ثبت‌ نام با موفقیت انجام شد.', 'success')
-        return redirect(url_for('login'))
+#         flash('ثبت‌ نام با موفقیت انجام شد.', 'success')
+#         return redirect(url_for('login'))
 
-    return render_template('register.html')
+#     return render_template('register.html')
+
+
 
 # نمایش لیست گزارش‌های IODEF
 @app.route("/iodef-documents")
@@ -288,7 +297,8 @@ def view_iodef_documents():
 @app.route("/home")
 def home():
     if not session.get("logged_in"):
-        return redirect(url_for("login"))
+        redirect(url_for("auth_bp.login"))
+
     
     today = datetime.utcnow().date()
     total_alerts = SplunkAlert.query.count()
