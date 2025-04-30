@@ -61,6 +61,10 @@
             <textarea name="xml">{{ doc.raw_xml }}</textarea>
             <button type="submit" class="btn">💾 ذخیره تغییرات</button>
         </form>
+		
+		<form method="POST" action="{{ url_for('resend_iodef_document', doc_id=doc.id) }}">
+		<button type="submit" class="btn btn-primary">📤 ارسال مجدد</button>
+		</form>
 
         <br>
         <a href="{{ url_for('view_iodef_document', incident_id=doc.id) }}" style="color: #90caf9;">بازگشت به مشاهده</a>

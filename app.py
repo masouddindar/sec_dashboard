@@ -103,7 +103,7 @@ def edit_iodef_document(doc_id):
     if request.method == "POST":
         edited_xml = request.form["xml"]
 
-        # ➡️ اضافه کردن اعتبارسنجی ساختار XML
+        #اضافه کردن اعتبارسنجی ساختار XML
         try:
             ET.fromstring(edited_xml)  # تلاش برای پارس کردن XML
         except ET.ParseError as e:
