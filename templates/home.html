@@ -176,9 +176,9 @@
                     <td>{{ doc.incidentid }}</td>
                     <td>{{ doc.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td>
-                        <a href="{{ url_for('incident_detail', doc_id=doc.id) }}">نمایش</a> |
-                        <a href="{{ url_for('edit_iodef_document', doc_id=doc.id) }}">ویرایش</a> |
-                        <form method="POST" action="{{ url_for('resend_iodef_document', doc_id=doc.id) }}"
+                        <a href="{{ url_for('incident_bp.incident_detail', doc_id=doc.id) }}">نمایش</a> |
+                        <a href="{{ url_for('incident_bp.edit_iodef_document', doc_id=doc.id) }}">ویرایش</a> |
+                        <form method="POST" action="{{ url_for('incident_bp.resend_iodef_document', doc_id=doc.id) }}"
                               style="display:inline;">
                             <button type="submit">ارسال مجدد</button>
                         </form>

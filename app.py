@@ -14,14 +14,14 @@ from models import IODEFDocument
 import xml.etree.ElementTree as ET
 from routes.iodef import iodef_bp
 from routes.auth import auth_bp
-
+from routes.incident_routes import incident_bp
 
 
 
 app = Flask(__name__)
 app.register_blueprint(iodef_bp)
 app.register_blueprint(auth_bp)
-
+app.register_blueprint(incident_bp)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'security_dashboard.db') 
@@ -32,69 +32,6 @@ db.init_app(app)
 
 app.secret_key = "mysecretkey"
 
-#make splunk hook 
-@app.route("/splunk-hook", methods=["POST"])
-def splunk_hook():
-    try:
-        data = request.get_json(force=True)
-
-        # داده‌های لازم
-        src = data.get("src")
-        dest = data.get("dest")
-        counter = data.get("counter")
-        starttime = data.get("starttime")
-        endtime = data.get("endtime")
-        detecttime = data.get("detecttime")
-        reporttime = data.get("reporttime")
-        body = data.get("body")
-        incidentid = data.get("incidentid")
-
-        # داده‌های ساختگی (بعداً واقعی می‌شن)
-        iodefdescription = f"حمله از {src} به {dest} با {counter} تلاش."
-        iodeftype = "dos" if int(counter) > 1000 else "scan"
-        srccountry = "Unknown"
-        meaning = "Suspicious Traffic"
-        src_port = "443"
-        proto = "TCP"
-        target_system = "<System category='target'><Node><Address category='ipv4-addr'>" + dest + "</Address></Node></System>"
-
-        # reading main file(body)
-        template_path = r"C:\Users\m.dindar\Desktop\myflaskapp\sec_dashboard\main_body.txt"
-        with open(template_path, "r", encoding="utf-8") as file:
-            xml_template = file.read()
-
-        # replacing
-        xml_filled = xml_template \
-            .replace("+ incidentid +", incidentid) \
-            .replace("+ detecttime +", detecttime) \
-            .replace("+ starttime +", starttime) \
-            .replace("+ endtime +", endtime) \
-            .replace("+ reporttime +", reporttime) \
-            .replace("+ iodefdescription +", iodefdescription) \
-            .replace("+ iodeftype +", iodeftype) \
-            .replace("+ src +", src) \
-            .replace("+ counter +", str(counter)) \
-            .replace("+ srccountry +", srccountry) \
-            .replace("+ meaning +", meaning) \
-            .replace("+ src_port +", src_port) \
-            .replace("+ proto +", proto) \
-            .replace("+ target_system +", target_system)
-
-        # save in db
-        
-        xml_doc = IODEFDocument(incidentid=incidentid, raw_xml=xml_filled)
-        db.session.add(xml_doc)
-        db.session.commit()
-
-        # sending to server
-        response = requests.post("1.1.1.1", data=xml_filled, headers={'Content-Type': 'application/xml'})
-        print("sending state", response.status_code)
-
-        return jsonify({"message": " make and send xml"}), 200
-
-    except Exception as e:
-        print("❌ Error:", e)
-        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/iodef/view/<int:incident_id>')
@@ -103,27 +40,27 @@ def view_iodef_document(incident_id):
     return render_template('show_incident.html', incident=incident)
     
 
-@app.route("/iodef-documents/edit/<int:doc_id>", methods=["GET", "POST"])
-def edit_iodef_document(doc_id):
-    doc = IODEFDocument.query.get_or_404(doc_id)
+# @app.route("/iodef-documents/edit/<int:doc_id>", methods=["GET", "POST"])
+# def edit_iodef_document(doc_id):
+#     doc = IODEFDocument.query.get_or_404(doc_id)
 
-    if request.method == "POST":
-        edited_xml = request.form["xml"]
+#     if request.method == "POST":
+#         edited_xml = request.form["xml"]
 
-        #اضافه کردن اعتبارسنجی ساختار XML
-        try:
-            ET.fromstring(edited_xml)  # تلاش برای پارس کردن XML
-        except ET.ParseError as e:
-            flash(f"❌ ساختار XML اشتباه است: {str(e)}", "error")
-            return redirect(url_for("edit_iodef_document", doc_id=doc.id))
+#         #اضافه کردن اعتبارسنجی ساختار XML
+#         try:
+#             ET.fromstring(edited_xml)  # تلاش برای پارس کردن XML
+#         except ET.ParseError as e:
+#             flash(f"❌ ساختار XML اشتباه است: {str(e)}", "error")
+#             return redirect(url_for("edit_iodef_document", doc_id=doc.id))
 
-        # اگر XML معتبر بود:
-        doc.raw_xml = edited_xml
-        db.session.commit()
-        flash("✅ XML با موفقیت ذخیره شد.", "success")
-        return redirect(url_for("view_iodef_document", incident_id=doc.id))
+#         # اگر XML معتبر بود:
+#         doc.raw_xml = edited_xml
+#         db.session.commit()
+#         flash("✅ XML با موفقیت ذخیره شد.", "success")
+#         return redirect(url_for("view_iodef_document", incident_id=doc.id))
 
-    return render_template("edit_iodef.html", doc=doc)
+#     return render_template("edit_iodef.html", doc=doc)
 
 @app.route("/iodef-documents/download/<int:doc_id>")
 def download_iodef_document(doc_id):
@@ -135,26 +72,26 @@ def download_iodef_document(doc_id):
     response.headers["Content-Disposition"] = f"attachment; filename={doc.incidentid}.xml"
     return response
 
-@app.route("/incident/resend/<int:doc_id>", methods=["POST"])
-def resend_iodef_document(doc_id):
+# @app.route("/incident/resend/<int:doc_id>", methods=["POST"])
+# def resend_iodef_document(doc_id):
     
-    incident = IODEFDocument.query.get_or_404(doc_id)
+#     incident = IODEFDocument.query.get_or_404(doc_id)
 
-    try:
-        response = requests.post("httpbin.org/post", data=incident.raw_xml,
-                                 headers={'Content-Type': 'application/xml'})
-        flash(f"📤 ارسال مجدد با موفقیت انجام شد. (Status: {response.status_code})", "success")
-    except Exception as e:
-        flash(f"خطا در ارسال مجدد: {str(e)}", "error")
+#     try:
+#         response = requests.post("httpbin.org/post", data=incident.raw_xml,
+#                                  headers={'Content-Type': 'application/xml'})
+#         flash(f"📤 ارسال مجدد با موفقیت انجام شد. (Status: {response.status_code})", "success")
+#     except Exception as e:
+#         flash(f"خطا در ارسال مجدد: {str(e)}", "error")
 
-    return redirect(url_for("incident_detail", doc_id=doc_id))
+#     return redirect(url_for("incident_detail", doc_id=doc_id))
 
 
-#detail  of page
-@app.route("/incident/<int:doc_id>")
-def incident_detail(doc_id):
-    incident = IODEFDocument.query.get_or_404(doc_id)
-    return render_template("incident_detail.html", incident=incident)
+# #detail  of page
+# @app.route("/incident/<int:doc_id>")
+# def incident_detail(doc_id):
+#     incident = IODEFDocument.query.get_or_404(doc_id)
+#     return render_template("incident_detail.html", incident=incident)
 
 
 
