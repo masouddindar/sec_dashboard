@@ -1,0 +1,16 @@
+# Ignore SQLite DB
+security_dashboard.db
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+.env
+
+# VSCode settings
+.vscode/
+
+# MacOS
+.DS_Store
