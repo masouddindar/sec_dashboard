@@ -6,25 +6,33 @@ import bcrypt
 
 auth_bp = Blueprint("auth_bp", __name__)
 
+# -----------------------------
+# صفحه ورود کاربران (Login)
+# -----------------------------
 @auth_bp.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
 
+        # یافتن کاربر بر اساس نام کاربری
         user = User.query.filter_by(username=username).first()
 
+        # اعتبارسنجی رمز عبور
         if user and bcrypt.checkpw(password.encode("utf-8"), user.password):
             session["logged_in"] = True
             session["username"] = username
-            return redirect(url_for("home"))
+            return redirect(url_for("home"))  # برگشت به خانه
         else:
             flash("نام کاربری یا رمز عبور اشتباه است!", "error")
             return redirect(url_for("auth_bp.login"))
 
-    return render_template("index.html")
+    return render_template("auth/login.html")
 
 
+# -----------------------------
+# ثبت‌نام کاربر جدید (Register)
+# -----------------------------
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == 'POST':
@@ -35,13 +43,16 @@ def register():
         extension = request.form.get('extension')
         unit = request.form.get('unit')
 
+        # هش کردن رمز عبور با Bcrypt
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
+        # بررسی تکراری نبودن نام کاربری
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             flash('نام کاربری قبلاً ثبت شده است.', 'error')
             return redirect(url_for('auth_bp.register'))
 
+        # ذخیره در دیتابیس
         new_user = User(
             fullname=fullname,
             personnel_number=personnel_number,
@@ -54,7 +65,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        flash('ثبت‌ نام با موفقیت انجام شد.', 'success')
+        flash('ثبت‌نام با موفقیت انجام شد.', 'success')
         return redirect(url_for('auth_bp.login'))
 
-    return render_template('register.html')
+    return render_template("auth/register.html")
